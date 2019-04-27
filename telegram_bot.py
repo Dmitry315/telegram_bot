@@ -2,6 +2,7 @@
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 import logging
+from time import gmtime, strftime
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -44,6 +45,12 @@ def work_time(bot, update):
 def close_keyboard(bot, update):
     update.message.reply_text("Ok", reply_markup=ReplyKeyboardRemove())
 
+def time (bot, update):
+    update.message.reply_text(strftime("%H:%M:%S", gmtime()))
+
+def date (bot, update):
+    update.message.reply_text(strftime("%Y-%m-%d", gmtime()))
+
 def main():
     # Создаём объект updater. Вместо слова "TOKEN" надо разместить
     # полученный от @BotFather токен
@@ -68,6 +75,8 @@ def main():
     dp.add_handler(CommandHandler("site", site))
     dp.add_handler(CommandHandler("work_time", work_time))
     dp.add_handler(CommandHandler("close", close_keyboard))
+    dp.add_handler(CommandHandler("time", time))
+    dp.add_handler(CommandHandler("date", date))
 
     # Запускаем цикл приема и обработки сообщений.
     updater.start_polling()
