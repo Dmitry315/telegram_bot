@@ -15,7 +15,7 @@ def echo(bot, update):
     # У message есть поле text, содержащее текст полученного сообщения,
     # а также метод reply_text(str), отсылающий ответ пользователю,
     # от которого получено сообщение.
-    update.message.reply_text('Я получил сообщение ' + update.message.text)
+    update.message.reply_text('Я получил сообщение ' + update.message.text[::-1])
 
 
 def start(bot, update):
