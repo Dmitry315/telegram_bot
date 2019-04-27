@@ -7,7 +7,7 @@ from time import gmtime, strftime
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 logger = logging.getLogger(__name__)
-reply_keyboard = [['/address', '/phone'],['/site', '/work_time']]
+reply_keyboard = [['/address', '/phone'],['/site', '/work_time', '/close']]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
 
 def echo(bot, update):
@@ -23,8 +23,7 @@ def start(bot, update):
     update.message.reply_text("Я бот-справочник. Какая информация вам нужна?", reply_markup=markup)
 
 def help(bot, update):
-    update.message.reply_text(
-        "Я пока не умею помогать... Я только ваше эхо.")
+    update.message.reply_text("Я пока не умею помогать... Я только ваше эхо.")
 
 
 def address(bot, update):
