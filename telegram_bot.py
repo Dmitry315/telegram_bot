@@ -3,6 +3,7 @@ from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 import logging
 from time import gmtime, strftime
+import json
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -11,11 +12,6 @@ reply_keyboard = [['/address', '/phone'],['/site', '/work_time', '/close']]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
 
 def echo(bot, update):
-    # У объекта класса Updater есть поле message, являющееся
-    # объектом сообщения.
-    # У message есть поле text, содержащее текст полученного сообщения,
-    # а также метод reply_text(str), отсылающий ответ пользователю,
-    # от которого получено сообщение.
     update.message.reply_text('Я получил сообщение ' + update.message.text[::-1])
 
 
@@ -82,6 +78,69 @@ def unset_timer(bot, update, chat_data):
 
     update.message.reply_text('Хорошо, вернулся сейчас!')
 
+##################
+# telephone book #
+##################
+with open('telephone_numbers.json', encoding='utf-8') as f:
+    numbers = json.load(f)
+digits = list('0123456789')
+
+def clean_number(number):
+    flag = True
+    clean = ''
+    for lit in number.replace('+7', '8'):
+        if lit in digits:
+            flag = False
+            clean += lit
+        else:
+            if flag:
+                clean += lit
+    return clean
+
+def find_by_number(num):
+    for i in numbers:
+        if clean_number(i['phone']) == num:
+            return i['name']
+    return 'Человек с таким номером не найден. Возможно вы ввели в неправильном формате.'
+
+def find_by_name(name):
+    flag = True
+    for i in numbers:
+        if clean_number(i['name']) == name:
+            flag = False
+            return i['number']
+    return 'Этот человек не найден в ваших записях. Возможно вы ввели в неправильном формате.'
+
+
+def parser(bot, update):
+    text = update.message.text
+    text = text.split(':')
+    if len(text) == 1:
+        text = text[0]
+        if any(map(str.isdigit, text)):
+            number = clean_number(text)
+            answer = find_by_number(number)
+        else:
+            answer = find_by_name(text)
+    else:
+        if any(map(str.isdigit, text[0])):
+            number = clean_number(''.join(text))
+            answer = find_by_number(number)
+        else:
+            name = text[0]
+            number = clean_number(''.join(text[1:]))
+            flag = True
+            for i in numbers:
+                if i['name'] == name:
+                    flag = False
+                    i['phone'] = number
+            if flag:
+                numbers.append({'name': name, 'phone': number,})
+            answer = 'Запись успешно сохранена'
+    update.message.reply_text(answer)
+
+
+
 def main():
     # Создаём объект updater. Вместо слова "TOKEN" надо разместить
     # полученный от @BotFather токен
@@ -90,12 +149,8 @@ def main():
     # Получаем из него диспетчер сообщений.
     dp = updater.dispatcher
 
-    # Создаём обработчик сообщений типа Filters.text
-    # из описанной выше функции echo()
-    # После регистрации обработчика в диспетчере эта функция
-    # будет вызываться при получении сообщения с типом "текст",
-    # т.е. текстовых сообщений.
-    text_handler = MessageHandler(Filters.text, echo)
+
+    text_handler = MessageHandler(Filters.text, parser)
 
     # Регистрируем обработчик в диспетчере.
     dp.add_handler(text_handler)
