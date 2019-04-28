@@ -108,7 +108,7 @@ def find_by_name(name):
     for i in numbers:
         if clean_number(i['name']) == name:
             flag = False
-            return i['number']
+            return i['phone']
     return 'Этот человек не найден в ваших записях. Возможно вы ввели в неправильном формате.'
 
 
