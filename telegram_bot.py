@@ -50,6 +50,38 @@ def time (bot, update):
 def date (bot, update):
     update.message.reply_text(strftime("%Y-%m-%d", gmtime()))
 
+
+def set_timer(bot, update, job_queue, chat_data, args):
+    # создаём задачу task в очереди job_queue через 20 секунд
+    # передаём ей идентификатор текущего чата
+    # (будет доступен через job.context)
+    try:
+        delay = int(args[0])  # секунд
+        job = job_queue.run_once(task, delay, context=update.message.chat_id)
+
+        # Запоминаем в пользовательских данных созданную задачу.
+        chat_data['job'] = job
+
+        # Присылаем сообщение о том, что всё получилось.
+        update.message.reply_text('Вернусь через '+str(delay)+' секунд!')
+    except Exception as err:
+        update.message.reply_text('Ошибка! Введите толко одно целое число!')
+
+def task(bot, job):
+    bot.send_message(job.context, text='Вернулся!')
+
+
+def unset_timer(bot, update, chat_data):
+    # Проверяем, что задача ставилась
+    # (вот зачем нужно было ее записать в chat_data).
+    if 'job' in chat_data:
+        # планируем удаление задачи (выполнется, когда будет возможность)
+        chat_data['job'].schedule_removal()
+        # и очищаем пользовательские данные
+        del chat_data['job']
+
+    update.message.reply_text('Хорошо, вернулся сейчас!')
+
 def main():
     # Создаём объект updater. Вместо слова "TOKEN" надо разместить
     # полученный от @BotFather токен
@@ -76,6 +108,10 @@ def main():
     dp.add_handler(CommandHandler("close", close_keyboard))
     dp.add_handler(CommandHandler("time", time))
     dp.add_handler(CommandHandler("date", date))
+    dp.add_handler(CommandHandler("set_timer", set_timer,
+                                  pass_job_queue=True, pass_chat_data=True, pass_args=True))
+    dp.add_handler(CommandHandler("unset_timer", unset_timer,
+                                  pass_chat_data=True))
 
     # Запускаем цикл приема и обработки сообщений.
     updater.start_polling()
